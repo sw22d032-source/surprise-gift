@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+
 
 type Step = "welcome" | "verify" | "scanning" | "gift" | "message";
 
@@ -17,6 +18,8 @@ export default function Home() {
   const [confirmChoice, setConfirmChoice] = useState<string | null>(null);
   const [savingChoice, setSavingChoice] = useState(false);
   const [choiceSaved, setChoiceSaved] = useState(false);
+  const [surpriseFinished, setSurpriseFinished] = useState(false);
+  const [checkingSurprise, setCheckingSurprise] = useState(true);
 
   const startVerification = () => {
     setStep("scanning");
@@ -97,6 +100,79 @@ export default function Home() {
   setConfirmChoice(null);
   setSavingChoice(false);
 };
+
+useEffect(() => {
+  const checkSurprise = async () => {
+    const { data, error } = await supabase
+      .from("surprise_choices")
+      .select("id")
+      .limit(1);
+
+    if (error) {
+      console.error("Surprise check error:", error);
+
+      // Алдаа гарсан ч сайтыг хаахгүй.
+      setCheckingSurprise(false);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      setSurpriseFinished(true);
+    }
+
+    setCheckingSurprise(false);
+  };
+
+  checkSurprise();
+}, []);
+
+
+if (checkingSurprise) {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 via-pink-50 to-white">
+      <div className="text-center">
+        <div className="animate-pulse text-5xl">💌</div>
+
+        <p className="mt-5 text-sm text-zinc-400">
+          Түр хүлээнэ үү...
+        </p>
+      </div>
+    </main>
+  );
+}
+
+
+if (surpriseFinished) {
+  return (
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-rose-50 via-pink-50 to-white px-6">
+      <section className="w-full max-w-md text-center">
+        <div className="text-7xl">💌</div>
+
+        <p className="mt-8 text-xs font-semibold uppercase tracking-[0.3em] text-rose-400">
+          Delivery complete
+        </p>
+
+        <h1 className="mt-4 text-4xl font-bold text-zinc-900">
+          Surprise дууслаа
+        </h1>
+
+        <p className="mt-5 text-lg leading-8 text-zinc-500">
+          Бэлэг эзэндээ
+          <br />
+          амжилттай хүрлээ 🤍
+        </p>
+
+        <div className="mx-auto mt-10 w-fit rounded-full border border-rose-200 bg-white px-5 py-3 text-sm text-zinc-500 shadow-sm">
+          ✓ Delivered
+        </div>
+
+        <p className="mt-12 text-xs text-zinc-400">
+          Made just for you 🤍
+        </p>
+      </section>
+    </main>
+  );
+}
   return (
     <main className="relative min-h-screen overflow-hidden bg-gradient-to-b from-rose-50 via-pink-50 to-white px-6 py-10">
       {/* Background decorations */}
